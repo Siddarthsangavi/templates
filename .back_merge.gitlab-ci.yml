@@ -1,0 +1,36 @@
+stages:
+  - back_merge
+
+variables:
+  TARGET_BRANCH: "main"
+  MR_TITLE: "Automatic Merge Request"
+  MR_DESCRIPTION: "This Merge Request was created automatically."
+  ASSIGNEE_IDS: "<USER_ID>"  # Add Assignee ID
+  REVIEWER_IDS: "<USER_ID>"   # Add Reviewer ID
+
+back_merge:
+  stage: back_merge
+  script:
+    - |
+      SOURCE_BRANCH="release/$CI_COMMIT_REF_NAME"
+
+      git fetch origin
+
+      DIFF=$(git diff origin/$TARGET_BRANCH origin/$CI_COMMIT_REF_NAME)
+
+      # Create merge request if differences exist.
+      if [ -n "$DIFF" ]; then
+        curl --request POST --header "PRIVATE-TOKEN: $GITLAB_API_TOKEN" \
+          --data-urlencode "source_branch=$SOURCE_BRANCH" \
+          --data-urlencode "target_branch=$TARGET_BRANCH" \
+          --data-urlencode "title=$MR_TITLE" \
+          --data-urlencode "description=$MR_DESCRIPTION" \
+          --data-urlencode "assignee_ids[]=$ASSIGNEE_IDS" \
+          --data-urlencode "reviewer_ids[]=$REVIEWER_IDS" \
+          "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests"
+      else
+        echo "No differences found between $SOURCE_BRANCH and $TARGET_BRANCH. Skipping merge request creation."
+      fi
+
+  rules:
+    - if: '$CI_COMMIT_REF_NAME =~ /^release\/.*/'
