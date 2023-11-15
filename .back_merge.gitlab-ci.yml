@@ -1,3 +1,5 @@
+# This script can be used if in case any release branch is created. This will trigger the pipeline whenever a branch will be created with the name release/* 
+# You can customise the branch naming in the rules section of script.
 stages:
   - back_merge
 
